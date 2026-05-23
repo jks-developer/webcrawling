@@ -15,6 +15,22 @@ sites:
     selectors: {}   # 어댑터가 직접 처리 (custom)
     enabled: true
 
+  # SH 서울주택도시공사 - 공고 및 공지 (분양/임대/특별공급/당첨자발표 통합 게시판)
+  - key: sh_seoul
+    name: SH 서울주택도시공사
+    adapter: sh_seoul.SHSeoul
+    url: https://www.i-sh.co.kr/main/lay2/program/S1T294C297/www/brd/m_247/list.do
+    selectors: {}   # 어댑터가 직접 처리 (custom)
+    enabled: true
+
+  # GH 경기주택도시공사 - 분양/임대 공고 게시판
+  - key: gh_gyeonggi
+    name: GH 경기주택도시공사
+    adapter: gh_gyeonggi.GHGyeonggi
+    url: https://www.gh.or.kr/gh/announcement-of-salerental001.do
+    selectors: {}   # 어댑터가 직접 처리 (custom)
+    enabled: true
+
   # 픽스처용 예시 어댑터. 새 사이트 추가 패턴 참고용.
   - key: example
     name: 예시 사이트 (스캐폴딩용 픽스처)

@@ -1,15 +1,15 @@
 # HANDOFF — 다음 세션 인수인계 문서
 
 > 본 문서는 **현재 세션 종료 시점의 프로젝트 상태**와 **다음 세션이 바로 이어할 수 있는 작업 지침**을 담는다.
-> 작성: 2026-05-23
+> 작성: 2026-05-23 (최초), 갱신: 2026-05-23 (1차 사이트 추가)
 
 ---
 
 ## 1. 현재 상태 한 줄 요약
 
-청약/공급 게시판 → Telegram 일일 알림 시스템이 **운영 가능 상태**.  
-현재 **1개 사이트**(중기부 경기) 등록 완료, 자동 실행 검증됨.  
-**다음 작업은 추가 청약 사이트를 같은 패턴으로 등록**하는 것.
+청약/공급 게시판 → Telegram 일일 알림 시스템이 **운영 가능 상태**.
+현재 **3개 사이트**(중기부 경기 + SH 서울 + GH 경기) 등록 완료.
+**다음 작업은 2차(청약홈) → 3차(LH 청약플러스) 어댑터 추가**.
 
 ---
 
@@ -44,6 +44,8 @@
 | key | name | status | adapter |
 |-----|------|--------|---------|
 | `mss_gyeonggi` | 중기부 경기 (특별공급) | ✅ enabled | `mss_gyeonggi.MssGyeonggi` (custom) |
+| `sh_seoul` | SH 서울주택도시공사 | ✅ enabled | `sh_seoul.SHSeoul` (custom: onclick `getDetailView`) |
+| `gh_gyeonggi` | GH 경기주택도시공사 | ✅ enabled | `gh_gyeonggi.GHGyeonggi` (custom: articleNo + date normalize) |
 | `example` | 예시 사이트 (스캐폴딩용) | disabled | `example_site.ExampleSite` (generic CSS) |
 
 ### 3.4 필터 (`config/filters.yml`)
@@ -195,18 +197,27 @@ git push origin master
 
 ## 7. 다음 세션이 할 일
 
-### 7.1 즉시 할 작업 (사용자 결정 대기)
-- [ ] 사용자에게서 **추가할 청약 사이트 URL 받기**
-- [ ] [Step 1~6 절차] 그대로 반복
-- [ ] 사이트별로 필요한 키워드 조정 필요 시 `filters.yml` 업데이트
+### 7.1 사이트 추가 추천 진행 상황 (2026-05-23 결정)
 
-### 7.2 후보 사이트 아이디어 (사용자 확정 전)
-- 청약홈 (https://www.applyhome.co.kr) — 일반적
-- LH 청약센터 — 한국토지주택공사
-- SH 공사 (서울)
-- iH (인천), GH (경기), 부산도시공사 등 지역 도시공사
-- 중기부 다른 지역청 (대전, 부산 등)
-- **사용자가 정해주는 사이트만 추가** — 임의로 추가하지 말 것
+사용자 조건: **서울+경기**, 4유형(민영분양/공공분양/공공임대/특별공급) 커버, **top 3-5 우선순위**.
+
+특별공급 별도 사이트 조사 결과: **신혼/생애최초/신생아 특별공급 전용 게시판 사이트는 없음**. 마이홈포털(JS 동적 렌더링, Playwright 필요)·뉴:홈(정책 안내 중심)은 부적합. 모두 청약홈/LH/SH/GH 통합 게시판에 게시됨.
+
+| 차수 | 사이트 | 상태 | 비고 |
+|------|--------|------|------|
+| 1차 | SH 서울주택도시공사 | ✅ 완료 | 정적 HTML + onclick `getDetailView` 파싱 |
+| 1차 | GH 경기주택도시공사 | ✅ 완료 | 정적 HTML + articleNo 추출 + 날짜 정규화 |
+| 2차 | 청약홈 (applyhome.co.kr) | ⏳ 대기 | 가장 가치 높음 — 단 JSP/JS 폼 POST일 가능성, 사전 분석 필수 |
+| 3차 | LH 청약플러스 (apply.lh.or.kr) | ⏳ 대기 | SPA/AJAX 가능성, 난이도 상. 청약홈에서 LH 공고가 일부 중복 노출되므로 후순위 |
+| 제외 | iH 인천도시공사 | ❌ 사용자 결정 | 서울+경기 범위 밖 |
+
+### 7.2 즉시 할 작업
+
+- [ ] **2차: 청약홈** 페이지 구조 분석 (`https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do`)
+  - 정적/JSP/JS 폼 POST 여부 확인 → 정적이면 셀렉터, 동적이면 직접 POST 또는 Playwright 검토
+- [ ] **3차: LH** 페이지 구조 분석 (`https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancList.do`)
+  - SPA 여부 확인 → AJAX endpoint 직접 호출 또는 Playwright 검토
+- [ ] 사이트별로 필요한 키워드 조정 필요 시 `filters.yml` 업데이트
 
 ### 7.3 운영 모니터링 (낮은 우선순위)
 - [ ] 매일 09:00 KST cron 실행 후 Actions 탭에서 결과 확인 (첫 며칠만)
