@@ -31,3 +31,7 @@ desktop.ini
 
 # Logs
 *.log
+
+# Session tooling (Claude Code / oh-my-claudecode)
+.claude/
+.omc/

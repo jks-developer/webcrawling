@@ -80,6 +80,17 @@ GitHub Actions가 다음 스케줄에 자동으로 새 사이트를 처리합니
 
 JS 렌더링/로그인/API 응답 등이 필요한 경우. 다음을 작성합니다.
 
+### 실제 운영 어댑터 (참고 사례)
+
+새 어댑터를 작성할 때 가장 가까운 패턴을 골라 카피해서 차이점만 수정하면 빠릅니다.
+
+| 어댑터 | 사용 패턴 | 핵심 구현 포인트 |
+|--------|-----------|----------------|
+| `src/sites/mss_gyeonggi.py` | `<a href="#view">` + `onclick="doBbsFView('cb','bc')"` | onclick 정규식으로 cb/bc 추출 → `View.do?cbIdx&bcIdx` 재조립 |
+| `src/sites/sh_seoul.py` | `<a onclick="getDetailView('SEQ')">` | onclick 정규식으로 seq 추출 → `view.do?seq` 재조립 |
+| `src/sites/gh_gyeonggi.py` | 상대 href `?mode=view&articleNo=...` + `YY.MM.DD` 날짜 | href에서 articleNo 추출, 날짜 `20YY-MM-DD` 정규화 |
+| `src/sites/applyhome.py` | `<tr data-hmno data-pbno>` + JS 폼 POST 디테일 (GET 동작 확인됨) + 보드별 디테일 URL 다름 | **공유 베이스 클래스 + 서브클래스로 `DETAIL_BASE`만 오버라이드** — 같은 사이트에 다중 보드가 있을 때 권장 |
+
 ### 단계 1: `src/sites/<my_site>.py` 생성
 
 ```python

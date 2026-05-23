@@ -75,7 +75,11 @@ webcrawling/
 │   ├── messenger.py       # Telegram Bot API
 │   └── sites/
 │       ├── base.py        # Post + SiteAdapter
-│       └── example_site.py# 일반 CSS-selector 기반 어댑터
+│       ├── example_site.py# 일반 CSS-selector 기반 어댑터 (정적 HTML용)
+│       ├── mss_gyeonggi.py# 중기부 경기 (onclick doBbsFView 파싱)
+│       ├── sh_seoul.py    # SH 서울 (onclick getDetailView 파싱)
+│       ├── gh_gyeonggi.py # GH 경기 (articleNo 추출 + 날짜 정규화)
+│       └── applyhome.py   # 청약홈 APT + 무순위/잔여 (베이스+서브클래스)
 ├── config/
 │   ├── sites.yml          # 사이트 목록
 │   └── filters.yml        # 알림 키워드

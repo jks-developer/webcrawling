@@ -222,13 +222,7 @@ git push origin master
 - [ ] (선택) 청약홈 오피스텔/도시형/민간임대 보드 디테일 GET 분석 재시도 (`selectPRMOLttotPblancDetailView.do`)
 - [ ] 사이트별로 필요한 키워드 조정 필요 시 `filters.yml` 업데이트
 
-### 7.2.1 청약홈 어댑터 설계 메모 (참고)
-- `src/sites/applyhome.py`에 `Applyhome` 베이스 클래스 + `ApplyhomeApt` / `ApplyhomeRemndr` 서브클래스.
-- 행 식별: `<tr data-hmno=.. data-pbno=.. data-honm=..>`
-- 제목: `td.txt_l > a` get_text (NEW 아이콘 `<img>`은 text 노드가 없어 자연 분리)
-- 날짜: td 위치가 보드별로 달라 `^\d{4}-\d{2}-\d{2}$` 패턴으로 첫 매칭 td 사용
-- 디테일 URL: 원래 폼 POST지만 GET도 동일 응답 — `selectAPT(Remndr)?LttotPblancDetail(View)?.do?houseManageNo=X&pblancNo=X`
-- 새 청약홈 보드 추가 시: 같은 파일 내 `Applyhome` 서브클래스로 `DETAIL_BASE` 1개만 오버라이드.
+> 어댑터 추가 패턴/아키텍처는 `CLAUDE.md` 참고.
 
 ### 7.3 운영 모니터링 (낮은 우선순위)
 - [ ] 매일 09:00 KST cron 실행 후 Actions 탭에서 결과 확인 (첫 며칠만)
