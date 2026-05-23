@@ -31,6 +31,22 @@ sites:
     selectors: {}   # 어댑터가 직접 처리 (custom)
     enabled: true
 
+  # 청약홈 APT 분양/임대 (민영/공공 + 신혼/생애최초/신생아 특별공급 포함)
+  - key: applyhome_apt
+    name: 청약홈 APT 분양/임대
+    adapter: applyhome.ApplyhomeApt
+    url: https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do
+    selectors: {}   # 어댑터가 직접 처리 (custom)
+    enabled: true
+
+  # 청약홈 APT 무순위/잔여세대 (무순위 사후, 취소후재공급, 불법행위 재공급)
+  - key: applyhome_remndr
+    name: 청약홈 APT 무순위/잔여세대
+    adapter: applyhome.ApplyhomeRemndr
+    url: https://www.applyhome.co.kr/ai/aia/selectAPTRemndrLttotPblancListView.do
+    selectors: {}   # 어댑터가 직접 처리 (custom)
+    enabled: true
+
   # 픽스처용 예시 어댑터. 새 사이트 추가 패턴 참고용.
   - key: example
     name: 예시 사이트 (스캐폴딩용 픽스처)

@@ -1,15 +1,15 @@
 # HANDOFF — 다음 세션 인수인계 문서
 
 > 본 문서는 **현재 세션 종료 시점의 프로젝트 상태**와 **다음 세션이 바로 이어할 수 있는 작업 지침**을 담는다.
-> 작성: 2026-05-23 (최초), 갱신: 2026-05-23 (1차 사이트 추가)
+> 작성: 2026-05-23 (최초), 갱신: 2026-05-23 (2차 청약홈 추가)
 
 ---
 
 ## 1. 현재 상태 한 줄 요약
 
 청약/공급 게시판 → Telegram 일일 알림 시스템이 **운영 가능 상태**.
-현재 **3개 사이트**(중기부 경기 + SH 서울 + GH 경기) 등록 완료.
-**다음 작업은 2차(청약홈) → 3차(LH 청약플러스) 어댑터 추가**.
+현재 **5개 사이트**(중기부 경기 + SH 서울 + GH 경기 + 청약홈 APT + 청약홈 무순위/잔여) 등록 완료.
+**다음 작업은 3차(LH 청약플러스) 어댑터 추가**.
 
 ---
 
@@ -46,6 +46,8 @@
 | `mss_gyeonggi` | 중기부 경기 (특별공급) | ✅ enabled | `mss_gyeonggi.MssGyeonggi` (custom) |
 | `sh_seoul` | SH 서울주택도시공사 | ✅ enabled | `sh_seoul.SHSeoul` (custom: onclick `getDetailView`) |
 | `gh_gyeonggi` | GH 경기주택도시공사 | ✅ enabled | `gh_gyeonggi.GHGyeonggi` (custom: articleNo + date normalize) |
+| `applyhome_apt` | 청약홈 APT 분양/임대 | ✅ enabled | `applyhome.ApplyhomeApt` (custom: `data-hmno`/`data-pbno` + GET 디테일) |
+| `applyhome_remndr` | 청약홈 APT 무순위/잔여세대 | ✅ enabled | `applyhome.ApplyhomeRemndr` (custom: same base, REMNDR detail URL) |
 | `example` | 예시 사이트 (스캐폴딩용) | disabled | `example_site.ExampleSite` (generic CSS) |
 
 ### 3.4 필터 (`config/filters.yml`)
@@ -207,17 +209,26 @@ git push origin master
 |------|--------|------|------|
 | 1차 | SH 서울주택도시공사 | ✅ 완료 | 정적 HTML + onclick `getDetailView` 파싱 |
 | 1차 | GH 경기주택도시공사 | ✅ 완료 | 정적 HTML + articleNo 추출 + 날짜 정규화 |
-| 2차 | 청약홈 (applyhome.co.kr) | ⏳ 대기 | 가장 가치 높음 — 단 JSP/JS 폼 POST일 가능성, 사전 분석 필수 |
+| 2차 | 청약홈 APT 분양/임대 (applyhome.co.kr) | ✅ 완료 | 정적 HTML + `data-hmno` 속성 + GET 디테일 URL |
+| 2차 | 청약홈 APT 무순위/잔여세대 | ✅ 완료 | 같은 base 클래스, REMNDR 디테일 URL만 다름 |
+| 2차 | 청약홈 오피스텔/도시형/민간임대 | ⚠️ 미추가 | 디테일 GET 응답이 1.8KB 에러 페이지. 추후 POST/세션쿠키 조사 필요 |
 | 3차 | LH 청약플러스 (apply.lh.or.kr) | ⏳ 대기 | SPA/AJAX 가능성, 난이도 상. 청약홈에서 LH 공고가 일부 중복 노출되므로 후순위 |
 | 제외 | iH 인천도시공사 | ❌ 사용자 결정 | 서울+경기 범위 밖 |
 
 ### 7.2 즉시 할 작업
 
-- [ ] **2차: 청약홈** 페이지 구조 분석 (`https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancListView.do`)
-  - 정적/JSP/JS 폼 POST 여부 확인 → 정적이면 셀렉터, 동적이면 직접 POST 또는 Playwright 검토
 - [ ] **3차: LH** 페이지 구조 분석 (`https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancList.do`)
   - SPA 여부 확인 → AJAX endpoint 직접 호출 또는 Playwright 검토
+- [ ] (선택) 청약홈 오피스텔/도시형/민간임대 보드 디테일 GET 분석 재시도 (`selectPRMOLttotPblancDetailView.do`)
 - [ ] 사이트별로 필요한 키워드 조정 필요 시 `filters.yml` 업데이트
+
+### 7.2.1 청약홈 어댑터 설계 메모 (참고)
+- `src/sites/applyhome.py`에 `Applyhome` 베이스 클래스 + `ApplyhomeApt` / `ApplyhomeRemndr` 서브클래스.
+- 행 식별: `<tr data-hmno=.. data-pbno=.. data-honm=..>`
+- 제목: `td.txt_l > a` get_text (NEW 아이콘 `<img>`은 text 노드가 없어 자연 분리)
+- 날짜: td 위치가 보드별로 달라 `^\d{4}-\d{2}-\d{2}$` 패턴으로 첫 매칭 td 사용
+- 디테일 URL: 원래 폼 POST지만 GET도 동일 응답 — `selectAPT(Remndr)?LttotPblancDetail(View)?.do?houseManageNo=X&pblancNo=X`
+- 새 청약홈 보드 추가 시: 같은 파일 내 `Applyhome` 서브클래스로 `DETAIL_BASE` 1개만 오버라이드.
 
 ### 7.3 운영 모니터링 (낮은 우선순위)
 - [ ] 매일 09:00 KST cron 실행 후 Actions 탭에서 결과 확인 (첫 며칠만)
