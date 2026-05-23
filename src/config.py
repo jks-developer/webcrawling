@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -30,6 +31,7 @@ class SiteConfig:
     url: str
     selectors: dict[str, str]
     enabled: bool = True
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -77,6 +79,7 @@ def parse_sites(path: Path) -> list[SiteConfig]:
                 url=raw["url"],
                 selectors=dict(raw.get("selectors", {}) or {}),
                 enabled=bool(raw.get("enabled", True)),
+                options=dict(raw.get("options", {}) or {}),
             )
         )
     return sites

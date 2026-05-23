@@ -67,3 +67,36 @@ def test_empty_table_returns_empty_list(tmp_path):
     empty = tmp_path / "empty.html"
     empty.write_text("<html><body><table></table></body></html>", encoding="utf-8")
     assert ApplyhomeApt(key="applyhome_apt", url=f"file://{empty}").fetch() == []
+
+
+def test_region_filter_drops_non_allowed_rows():
+    """allowed_regions=['서울','경기'] should drop e.g. ``강원``/``부산`` rows."""
+    all_posts = ApplyhomeApt(key="applyhome_apt", url=APT_URL).fetch()
+    filtered = ApplyhomeApt(
+        key="applyhome_apt",
+        url=APT_URL,
+        allowed_regions=["서울", "경기"],
+    ).fetch()
+    # Fixture has non-수도권 rows (강원, etc.) — count must drop.
+    assert len(filtered) < len(all_posts)
+    assert filtered  # but not to zero
+
+
+def test_region_filter_disabled_by_default():
+    """Backward-compat: no allowed_regions => same result as before."""
+    default = ApplyhomeApt(key="applyhome_apt", url=APT_URL).fetch()
+    explicit_none = ApplyhomeApt(
+        key="applyhome_apt", url=APT_URL, allowed_regions=None
+    ).fetch()
+    assert [p.id for p in default] == [p.id for p in explicit_none]
+
+
+def test_remndr_region_filter_applies():
+    all_posts = ApplyhomeRemndr(key="applyhome_remndr", url=REMNDR_URL).fetch()
+    filtered = ApplyhomeRemndr(
+        key="applyhome_remndr",
+        url=REMNDR_URL,
+        allowed_regions=["서울", "경기"],
+    ).fetch()
+    assert len(filtered) < len(all_posts)
+    assert filtered

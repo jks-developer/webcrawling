@@ -32,7 +32,12 @@ def build_adapter(site_cfg: SiteConfig) -> SiteAdapter:
     module_name, class_name = site_cfg.adapter.rsplit(".", 1)
     module = importlib.import_module(f"src.sites.{module_name}")
     cls = getattr(module, class_name)
-    return cls(key=site_cfg.key, url=site_cfg.url, selectors=site_cfg.selectors)
+    return cls(
+        key=site_cfg.key,
+        url=site_cfg.url,
+        selectors=site_cfg.selectors,
+        **site_cfg.options,
+    )
 
 
 def fetch_all(sites: list[SiteConfig]) -> list[FetchResult]:

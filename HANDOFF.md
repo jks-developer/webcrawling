@@ -1,15 +1,15 @@
 # HANDOFF — 다음 세션 인수인계 문서
 
 > 본 문서는 **현재 세션 종료 시점의 프로젝트 상태**와 **다음 세션이 바로 이어할 수 있는 작업 지침**을 담는다.
-> 작성: 2026-05-23 (최초), 갱신: 2026-05-23 (2차 청약홈 추가)
+> 작성: 2026-05-23 (최초), 갱신: 2026-05-23 (LH 추가 + 어댑터 레벨 지역 필터 도입)
 
 ---
 
 ## 1. 현재 상태 한 줄 요약
 
 청약/공급 게시판 → Telegram 일일 알림 시스템이 **운영 가능 상태**.
-현재 **5개 사이트**(중기부 경기 + SH 서울 + GH 경기 + 청약홈 APT + 청약홈 무순위/잔여) 등록 완료.
-**다음 작업은 3차(LH 청약플러스) 어댑터 추가**.
+현재 **7개 사이트** (중기부 경기 + SH 서울 + GH 경기 + 청약홈 APT + 청약홈 무순위/잔여 + LH 청약플러스 임대 + LH 청약플러스 분양) 등록 완료.
+전국 통합 게시판(청약홈 / LH) 4개에는 **어댑터 레벨 지역 필터**(`allowed_regions: [서울, 경기]`)가 적용되어 비수도권 단일지역 글이 차단된다.
 
 ---
 
@@ -41,14 +41,16 @@
 - 권한: `contents: write` — 워크플로우가 `data/seen_ids.json` 자동 커밋 후 push
 
 ### 3.3 등록된 사이트 (`config/sites.yml`)
-| key | name | status | adapter |
-|-----|------|--------|---------|
-| `mss_gyeonggi` | 중기부 경기 (특별공급) | ✅ enabled | `mss_gyeonggi.MssGyeonggi` (custom) |
-| `sh_seoul` | SH 서울주택도시공사 | ✅ enabled | `sh_seoul.SHSeoul` (custom: onclick `getDetailView`) |
-| `gh_gyeonggi` | GH 경기주택도시공사 | ✅ enabled | `gh_gyeonggi.GHGyeonggi` (custom: articleNo + date normalize) |
-| `applyhome_apt` | 청약홈 APT 분양/임대 | ✅ enabled | `applyhome.ApplyhomeApt` (custom: `data-hmno`/`data-pbno` + GET 디테일) |
-| `applyhome_remndr` | 청약홈 APT 무순위/잔여세대 | ✅ enabled | `applyhome.ApplyhomeRemndr` (custom: same base, REMNDR detail URL) |
-| `example` | 예시 사이트 (스캐폴딩용) | disabled | `example_site.ExampleSite` (generic CSS) |
+| key | name | status | adapter | 지역 필터 |
+|-----|------|--------|---------|-----------|
+| `mss_gyeonggi` | 중기부 경기 (특별공급) | ✅ enabled | `mss_gyeonggi.MssGyeonggi` (custom) | 사이트 자체 경기 한정 |
+| `sh_seoul` | SH 서울주택도시공사 | ✅ enabled | `sh_seoul.SHSeoul` (custom: onclick `getDetailView`) | 사이트 자체 서울 한정 |
+| `gh_gyeonggi` | GH 경기주택도시공사 | ✅ enabled | `gh_gyeonggi.GHGyeonggi` (custom: articleNo + date normalize) | 사이트 자체 경기 한정 |
+| `applyhome_apt` | 청약홈 APT 분양/임대 | ✅ enabled | `applyhome.ApplyhomeApt` (custom: `data-hmno`/`data-pbno` + GET 디테일) | `allowed_regions: [서울, 경기]` |
+| `applyhome_remndr` | 청약홈 APT 무순위/잔여세대 | ✅ enabled | `applyhome.ApplyhomeRemndr` (custom: same base, REMNDR detail URL) | `allowed_regions: [서울, 경기]` |
+| `lh_apply_rental` | LH 청약플러스 임대주택 | ✅ enabled | `lh_apply.LHApply` (custom: `wrtancInfoBtn` data-id + mi 분기) | `allowed_regions: [서울, 경기]` |
+| `lh_apply_sale` | LH 청약플러스 분양주택 | ✅ enabled | `lh_apply.LHApply` (custom: 같은 클래스, `mi=1027`) | `allowed_regions: [서울, 경기]` |
+| `example` | 예시 사이트 (스캐폴딩용) | disabled | `example_site.ExampleSite` (generic CSS) | — |
 
 ### 3.4 필터 (`config/filters.yml`)
 ```yaml
@@ -195,6 +197,18 @@ git push origin master
 - **이미 seen_ids에 있는 글은 알림 안 옴**. 새로 필터를 통과시키더라도 이미 본 글이면 silent
 - 이전에 필터로 제외됐던 글을 강제 알림받고 싶다면 seen_ids에서 해당 ID 제거 (또는 사이트 키 통째로 리셋)
 
+### 6.8 어댑터 레벨 지역 필터 (`options.allowed_regions`)
+- `config/sites.yml`의 사이트 항목에 `options.allowed_regions: [서울, 경기]`를 적으면, 어댑터가 row의 지역 컬럼을 보고 비매칭 글을 drop.
+- 디스패처(`src/crawler.py`)가 `options` dict를 어댑터 `__init__`에 키워드로 unpack. 옵션이 없으면 기존 동작(전국 통과)과 동일 — 회귀 없음.
+- 매칭 규칙(`src/sites/base.region_passes`):
+  - **substring 매칭** — `서울`은 `서울특별시`/`서울` 모두 매칭. 광역시도 풀네임/단축형 양쪽 호환.
+  - **fail-open** — `""`/`-`/`전국`/`수도권`/`공통`/`OOO 외` 표기는 모두 통과. 누락 위험을 노이즈보다 우선시.
+  - **현재 적용 대상**: `applyhome_apt`, `applyhome_remndr`, `lh_apply_rental`, `lh_apply_sale` 4개 (모두 전국 통합 게시판).
+- 인천을 제외 결정: §7.1 참고. 단 `인천광역시 외`는 부천(=경기) 포함 가능성으로 fail-open 통과.
+- 사이트별 row 지역 컬럼:
+  - 청약홈 APT/Remndr: td[0] (단축형 `서울`/`경기`/`강원`...)
+  - LH 임대/분양: td[3] (풀네임 `서울특별시`/`경기도`/`대구광역시 외`...)
+
 ---
 
 ## 7. 다음 세션이 할 일
@@ -212,14 +226,17 @@ git push origin master
 | 2차 | 청약홈 APT 분양/임대 (applyhome.co.kr) | ✅ 완료 | 정적 HTML + `data-hmno` 속성 + GET 디테일 URL |
 | 2차 | 청약홈 APT 무순위/잔여세대 | ✅ 완료 | 같은 base 클래스, REMNDR 디테일 URL만 다름 |
 | 2차 | 청약홈 오피스텔/도시형/민간임대 | ⚠️ 미추가 | 디테일 GET 응답이 1.8KB 에러 페이지. 추후 POST/세션쿠키 조사 필요 |
-| 3차 | LH 청약플러스 (apply.lh.or.kr) | ⏳ 대기 | SPA/AJAX 가능성, 난이도 상. 청약홈에서 LH 공고가 일부 중복 노출되므로 후순위 |
+| 3차 | LH 청약플러스 임대주택 (`mi=1026`) | ✅ 완료 | 콜드 세션 GET 정상. `wrtancInfoBtn` data-id 4개로 디테일 URL 재조립. `YYYY.MM.DD` 정규화. em.day 제거 |
+| 3차 | LH 청약플러스 분양주택 (`mi=1027`) | ✅ 완료 | 같은 클래스 (`LHApply`), 보드 분기는 yaml URL의 `mi` 파라미터로 |
+| 3차 | LH 청약플러스 토지/상가 (`mi=1062/1069`) | ❌ 사용자 결정 | 청약 4유형 범위 밖 |
+| — | **어댑터 레벨 지역 필터 도입** | ✅ 완료 | `options.allowed_regions` + 디스패처 unpack + fail-open 정책 (§6.8) |
 | 제외 | iH 인천도시공사 | ❌ 사용자 결정 | 서울+경기 범위 밖 |
 
 ### 7.2 즉시 할 작업
 
-- [ ] **3차: LH** 페이지 구조 분석 (`https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancList.do`)
-  - SPA 여부 확인 → AJAX endpoint 직접 호출 또는 Playwright 검토
+- [ ] **운영 모니터링 (1~2일)**: LH 보드가 매일 09:00 KST cron에서 정상 fetch 되는지 + 알림 도착 확인
 - [ ] (선택) 청약홈 오피스텔/도시형/민간임대 보드 디테일 GET 분석 재시도 (`selectPRMOLttotPblancDetailView.do`)
+- [ ] (선택) 라이브 운영 후 노이즈가 많으면 `allowed_regions` 정책 조정 — 예: `'외'` 자동 통과를 끄고 본부명(`서울지역본부`/`경기지역본부`) 화이트리스트 추가
 - [ ] 사이트별로 필요한 키워드 조정 필요 시 `filters.yml` 업데이트
 
 > 어댑터 추가 패턴/아키텍처는 `CLAUDE.md` 참고.

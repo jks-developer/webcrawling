@@ -15,6 +15,9 @@ Notes:
 - The 모집공고일 column sits at a different td index per board (APT=td[6],
   REMNDR=td[4]), so the date is located by scanning each row for the first
   ``YYYY-MM-DD`` cell text rather than a fixed index.
+- 지역(공급지역) is td[0] on both boards (단축형: ``서울``/``경기``/``강원``...).
+  Optional ``allowed_regions`` keyword filters rows by ``region_passes`` so
+  yaml can scope the alerts to e.g. ``[서울, 경기]``.
 """
 from __future__ import annotations
 
@@ -24,7 +27,7 @@ from pathlib import Path
 import requests
 from bs4 import BeautifulSoup
 
-from src.sites.base import Post, SiteAdapter
+from src.sites.base import Post, SiteAdapter, region_passes
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 DEFAULT_UA = (
@@ -48,12 +51,14 @@ class Applyhome(SiteAdapter):
         key: str,
         url: str,
         selectors: dict[str, str] | None = None,
+        allowed_regions: list[str] | None = None,
         user_agent: str = DEFAULT_UA,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> None:
         self.key = key
         self.url = url
         self._selectors = selectors or {}
+        self._allowed_regions = list(allowed_regions) if allowed_regions else None
         self._user_agent = user_agent
         self._timeout = timeout
 
@@ -66,6 +71,10 @@ class Applyhome(SiteAdapter):
             pbno = (tr.get("data-pbno") or hmno).strip()
             if not hmno:
                 continue
+            tds = tr.find_all("td")
+            region = tds[0].get_text(strip=True) if tds else ""
+            if not region_passes(region, self._allowed_regions):
+                continue
             anchor = tr.select_one("td.txt_l a")
             if anchor is None:
                 continue
@@ -73,7 +82,7 @@ class Applyhome(SiteAdapter):
             if not title:
                 continue
             date = ""
-            for td in tr.find_all("td"):
+            for td in tds:
                 text = td.get_text(strip=True)
                 if DATE_PATTERN.match(text):
                     date = text
