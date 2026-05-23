@@ -1,0 +1,20 @@
+# 크롤링 대상 사이트 목록.
+# 새 사이트를 추가하려면:
+#   1) src/sites/<new_module>.py 에 SiteAdapter 구현
+#   2) 아래 sites: 항목에 등록
+#   3) enabled: true 로 켜기
+#
+# 참고: docs/ADD_SITE.md
+
+sites:
+  - key: example
+    name: 예시 사이트 (스캐폴딩용 픽스처)
+    adapter: example_site.ExampleSite
+    url: file://tests/fixtures/sample.html
+    selectors:
+      row: "tr.item"
+      title: "a.title"
+      link: "a.title@href"
+      date: "td.date"
+      id: "a.title@data-id"
+    enabled: false   # 실제 사이트 추가되면 true 로 변경
