@@ -7,6 +7,15 @@
 # 참고: docs/ADD_SITE.md
 
 sites:
+  # 중소벤처기업부 경기지방청 게시판 (장기근속 중소기업 근로자 주택 특별공급)
+  - key: mss_gyeonggi
+    name: 중기부 경기 (특별공급)
+    adapter: mss_gyeonggi.MssGyeonggi
+    url: https://www.mss.go.kr/site/gyeonggi/ex/bbs/List.do?cbIdx=323
+    selectors: {}   # 어댑터가 직접 처리 (custom)
+    enabled: true
+
+  # 픽스처용 예시 어댑터. 새 사이트 추가 패턴 참고용.
   - key: example
     name: 예시 사이트 (스캐폴딩용 픽스처)
     adapter: example_site.ExampleSite
@@ -17,4 +26,4 @@ sites:
       link: "a.title@href"
       date: "td.date"
       id: "a.title@data-id"
-    enabled: false   # 실제 사이트 추가되면 true 로 변경 (또는 example 항목 제거)
+    enabled: false
