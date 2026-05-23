@@ -17,4 +17,4 @@ sites:
       link: "a.title@href"
       date: "td.date"
       id: "a.title@data-id"
-    enabled: false   # 실제 사이트 추가되면 true 로 변경
+    enabled: true    # P5 CI 검증용으로 일시 활성화. 실제 사이트 추가 후 false 로 변경

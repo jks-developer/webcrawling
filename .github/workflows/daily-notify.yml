@@ -1,0 +1,49 @@
+name: Daily Notify
+
+on:
+  schedule:
+    # UTC 00:00 == KST 09:00 (Korea Standard Time, UTC+9)
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # manual trigger from Actions tab
+
+permissions:
+  contents: write   # to commit data/seen_ids.json updates back to master
+
+concurrency:
+  group: daily-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run notifier
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m src.main
+
+      - name: Commit updated state
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seen_ids.json
+          if git diff --cached --quiet; then
+            echo "no state changes to commit"
+          else
+            git commit -m "chore: update seen_ids [skip ci]"
+            git push
+          fi
