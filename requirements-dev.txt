@@ -1,0 +1,3 @@
+# Dev/test only. Not installed in GitHub Actions production workflow.
+-r requirements.txt
+pytest>=8.0
